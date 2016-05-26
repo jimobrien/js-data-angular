@@ -209,6 +209,40 @@ class DSProvider {
         }
       }
 
+      // Hook into the digest loop
+      if (typeof Object.observe !== 'function' || typeof Array.observe !== 'function') {
+        function registerDigestHook() {
+          return $rootScope.$watch(() => store.observe.Platform.performMicrotaskCheckpoint())
+        }
+
+        let unregisterDigestHook = registerDigestHook();
+
+        (window => {
+          let timeout = null;
+
+          window.document.addEventListener('scroll', function(event){
+            clearTimeout(timeout);
+
+            if (event.target.className.indexOf('ui-grid') > -1) {
+
+              // Unregister the watcher when scrolling inside of ui-grid
+              unregisterDigestHook();
+
+              // Reattach the watcher when scrolling has completed. This timeout will be
+              // replaced with a new one if another scroll event fires within 500ms.
+              timeout = setTimeout(function(){
+                  unregisterDigestHook = registerDigestHook();
+              }, 500);
+
+            } else {
+              return;
+            }
+
+          });
+
+        })(window)
+      }
+
       return store
     }
 
@@ -228,42 +262,6 @@ angular.module('js-data', ['ng'])
   .provider('DSHttpAdapter', DSHttpAdapterProvider)
   .run(['DS', 'DSHttpAdapter', '$rootScope', (DS, DSHttpAdapter, $rootScope) => {
     DS.registerAdapter('http', DSHttpAdapter, { 'default': true })
-
-    // Hook into the digest loop
-    if (typeof Object.observe !== 'function' || typeof Array.observe !== 'function') {
-      function registerDigestHook() {
-        return $rootScope.$watch(() => store.observe.Platform.performMicrotaskCheckpoint())
-      }
-
-      let unregisterDigestHook = registerDigestHook();
-
-      (window => {
-        let timeout = null;
-
-        window.document.addEventListener('scroll', function(event){
-          clearTimeout(timeout);
-
-          if (event.target.className.indexOf('ui-grid') > -1) {
-
-            // Unregister the watcher when scrolling inside of ui-grid
-            unregisterDigestHook();
-
-            // Reattach the watcher when scrolling has completed. This timeout will be
-            // replaced with a new one if another scroll event fires within 500ms.
-            timeout = setTimeout(function(){
-                unregisterDigestHook = registerDigestHook();
-            }, 500);
-
-          } else {
-            return;
-          }
-
-        });
-
-      })(window)
-    }
-
-
   }]);
 
 for (var i = 0; i < adapters.length; i++) {
