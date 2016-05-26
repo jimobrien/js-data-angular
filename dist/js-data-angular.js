@@ -1,11 +1,3 @@
-/*!
-* js-data-angular
-* @version 3.2.1 - Homepage <https://github.com/js-data/js-data-angular>
-* @copyright (c) 2014-2016 js-data-angular project authors
-* @license MIT <https://github.com/js-data/js-data-angular/blob/master/LICENSE>
-*
-* @overview Angular wrapper for js-data.
-*/
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory(require("js-data"), require("angular"), (function webpackLoadOptionalExternalModule() { try { return require("axios"); } catch(e) {} }()));
@@ -102,6 +94,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	}];
 	
 	var functionsToWrap = ['compute', 'digest', 'eject', 'inject'];
+	
+	var unregisterDigestHook = null;
+	
+	function registerDigestHook() {
+	  return $rootScope.$watch(function () {
+	    return store.observe.Platform.performMicrotaskCheckpoint();
+	  });
+	}
+	
+	(function (window) {
+	  var timeout = null;
+	
+	  window.document.addEventListener('scroll', function (event) {
+	    clearTimeout(timeout);
+	
+	    if (event.target.className.indexOf('ui-grid') > -1) {
+	
+	      // Unregister the watcher when scrolling inside of ui-grid
+	      unregisterDigestHook();
+	
+	      // Reattach the watcher when scrolling has completed. This timeout will be
+	      // replaced with a new one if another scroll event fires within 500ms.
+	      timeout = setTimeout(function () {
+	        unregisterDigestHook = registerDigestHook();
+	      }, 500);
+	    } else {
+	      return;
+	    }
+	  });
+	})(window);
 	
 	function registerAdapter(adapter) {
 	  var Adapter = void 0;
@@ -297,9 +319,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // Hook into the digest loop
 	    if (typeof Object.observe !== 'function' || typeof Array.observe !== 'function') {
-	      $rootScope.$watch(function () {
-	        return store.observe.Platform.performMicrotaskCheckpoint();
-	      });
+	      unregisterDigestHook = registerDigestHook();
 	    }
 	
 	    return store;
@@ -312,7 +332,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _this.$get = deps;
 	};
 	
-	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter) {
+	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).constant('DigestHook', DigestHook).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter) {
 	  DS.registerAdapter('http', DSHttpAdapter, { 'default': true });
 	}]);
 	
@@ -703,12 +723,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 	
 	DSHttpAdapter.version = {
-	  full: '3.2.1',
-	  major: parseInt('3', 10),
-	  minor: parseInt('2', 10),
-	  patch: parseInt('1', 10),
-	  alpha:  true ? 'false' : false,
-	  beta:  true ? 'false' : false
+	  full: '<%= pkg.version %>',
+	  major: parseInt('<%= major %>', 10),
+	  minor: parseInt('<%= minor %>', 10),
+	  patch: parseInt('<%= patch %>', 10),
+	  alpha:  true ? '<%= alpha %>' : false,
+	  beta:  true ? '<%= beta %>' : false
 	};
 	
 	module.exports = DSHttpAdapter;
