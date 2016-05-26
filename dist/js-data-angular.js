@@ -287,11 +287,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      _loop();
 	    }
 	
-	    // Hook into the digest loop
-	    if (typeof Object.observe !== 'function' || typeof Array.observe !== 'function') {
-	      unregisterDigestHook = registerDigestHook();
-	    }
-	
 	    return store;
 	  }
 	
@@ -303,35 +298,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter, $rootScope) {
-	  function registerDigestHook() {
-	    return $rootScope.$watch(function () {
-	      return store.observe.Platform.performMicrotaskCheckpoint();
-	    });
+	  DS.registerAdapter('http', DSHttpAdapter, { 'default': true });
+	
+	  // Hook into the digest loop
+	  if (typeof Object.observe !== 'function' || typeof Array.observe !== 'function') {
+	    (function () {
+	      var registerDigestHook = function registerDigestHook() {
+	        return $rootScope.$watch(function () {
+	          return store.observe.Platform.performMicrotaskCheckpoint();
+	        });
+	      };
+	
+	      var unregisterDigestHook = registerDigestHook();
+	
+	      (function (window) {
+	        var timeout = null;
+	
+	        window.document.addEventListener('scroll', function (event) {
+	          clearTimeout(timeout);
+	
+	          if (event.target.className.indexOf('ui-grid') > -1) {
+	
+	            // Unregister the watcher when scrolling inside of ui-grid
+	            unregisterDigestHook();
+	
+	            // Reattach the watcher when scrolling has completed. This timeout will be
+	            // replaced with a new one if another scroll event fires within 500ms.
+	            timeout = setTimeout(function () {
+	              unregisterDigestHook = registerDigestHook();
+	            }, 500);
+	          } else {
+	            return;
+	          }
+	        });
+	      })(window);
+	    })();
 	  }
-	
-	  var unregisterDigestHook = registerDigestHook();
-	
-	  DS.registerAdapter('http', DSHttpAdapter, { 'default': true })(function (window) {
-	    var timeout = null;
-	
-	    window.document.addEventListener('scroll', function (event) {
-	      clearTimeout(timeout);
-	
-	      if (event.target.className.indexOf('ui-grid') > -1) {
-	
-	        // Unregister the watcher when scrolling inside of ui-grid
-	        unregisterDigestHook();
-	
-	        // Reattach the watcher when scrolling has completed. This timeout will be
-	        // replaced with a new one if another scroll event fires within 500ms.
-	        timeout = setTimeout(function () {
-	          unregisterDigestHook = registerDigestHook();
-	        }, 500);
-	      } else {
-	        return;
-	      }
-	    });
-	  })(window);
 	}]);
 	
 	for (var i = 0; i < adapters.length; i++) {
