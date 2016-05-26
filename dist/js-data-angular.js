@@ -332,7 +332,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _this.$get = deps;
 	};
 	
-	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).constant('DigestHook', DigestHook).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter) {
+	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter) {
 	  DS.registerAdapter('http', DSHttpAdapter, { 'default': true });
 	}]);
 	
