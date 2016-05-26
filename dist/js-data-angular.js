@@ -301,7 +301,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        (function (window) {
 	          var timeout = null;
 	
-	          window.document.addEventListener('scroll', function (event) {
+	          window.addEventListener('wheel', function (event) {
 	            clearTimeout(timeout);
 	
 	            if (event.target.className.indexOf('ui-grid') > -1) {
