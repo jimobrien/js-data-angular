@@ -226,7 +226,7 @@ angular.module('js-data', ['ng'])
   .value('DSVersion', JSData.version)
   .provider('DS', DSProvider)
   .provider('DSHttpAdapter', DSHttpAdapterProvider)
-  .run(['DS', 'DSHttpAdapter', (DS, DSHttpAdapter, $rootScope) => {
+  .run(['DS', 'DSHttpAdapter', '$rootScope', (DS, DSHttpAdapter, $rootScope) => {
     DS.registerAdapter('http', DSHttpAdapter, { 'default': true })
 
     // Hook into the digest loop
