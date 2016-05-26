@@ -36,41 +36,6 @@ let functionsToWrap = [
   'inject'
 ]
 
-let unregisterDigestHook = null
-
-
-function registerDigestHook($rootScope) {
-  return $rootScope.$watch(() => store.observe.Platform.performMicrotaskCheckpoint())
-}
-
-
-(window => {
-  let timeout = null;
-
-  window.document.addEventListener('scroll', function(event){
-    clearTimeout(timeout);
-
-    if (event.target.className.indexOf('ui-grid') > -1) {
-
-      // Unregister the watcher when scrolling inside of ui-grid
-      unregisterDigestHook();
-
-      // Reattach the watcher when scrolling has completed. This timeout will be
-      // replaced with a new one if another scroll event fires within 500ms.
-      timeout = setTimeout(function(){
-          unregisterDigestHook = registerDigestHook();
-      }, 500);
-
-    } else {
-      return;
-    }
-
-  });
-
-})(window)
-
-
-
 function registerAdapter (adapter) {
   let Adapter
 
@@ -267,9 +232,44 @@ angular.module('js-data', ['ng'])
   .provider('DS', DSProvider)
   .provider('DSHttpAdapter', DSHttpAdapterProvider)
   .run(['DS', 'DSHttpAdapter', (DS, DSHttpAdapter, $rootScope) => {
+
+    let unregisterDigestHook = null
     registerDigestHook($rootScope)
     DS.registerAdapter('http', DSHttpAdapter, { 'default': true })
-  }])
+
+
+    function registerDigestHook() {
+      return $rootScope.$watch(() => store.observe.Platform.performMicrotaskCheckpoint())
+    }
+
+    (window => {
+      let timeout = null;
+
+      window.document.addEventListener('scroll', function(event){
+        clearTimeout(timeout);
+
+        if (event.target.className.indexOf('ui-grid') > -1) {
+
+          // Unregister the watcher when scrolling inside of ui-grid
+          unregisterDigestHook($rootScope);
+
+          // Reattach the watcher when scrolling has completed. This timeout will be
+          // replaced with a new one if another scroll event fires within 500ms.
+          timeout = setTimeout(function(){
+              unregisterDigestHook = registerDigestHook();
+          }, 500);
+
+        } else {
+          return;
+        }
+
+      });
+
+    })(window)
+
+
+
+  }]);
 
 for (var i = 0; i < adapters.length; i++) {
   registerAdapter(adapters[i])

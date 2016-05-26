@@ -95,36 +95,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var functionsToWrap = ['compute', 'digest', 'eject', 'inject'];
 	
-	var unregisterDigestHook = null;
-	
-	function registerDigestHook($rootScope) {
-	  return $rootScope.$watch(function () {
-	    return store.observe.Platform.performMicrotaskCheckpoint();
-	  });
-	}
-	
-	(function (window) {
-	  var timeout = null;
-	
-	  window.document.addEventListener('scroll', function (event) {
-	    clearTimeout(timeout);
-	
-	    if (event.target.className.indexOf('ui-grid') > -1) {
-	
-	      // Unregister the watcher when scrolling inside of ui-grid
-	      unregisterDigestHook();
-	
-	      // Reattach the watcher when scrolling has completed. This timeout will be
-	      // replaced with a new one if another scroll event fires within 500ms.
-	      timeout = setTimeout(function () {
-	        unregisterDigestHook = registerDigestHook();
-	      }, 500);
-	    } else {
-	      return;
-	    }
-	  });
-	})(window);
-	
 	function registerAdapter(adapter) {
 	  var Adapter = void 0;
 	
@@ -333,8 +303,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter, $rootScope) {
+	
+	  var unregisterDigestHook = null;
 	  registerDigestHook($rootScope);
 	  DS.registerAdapter('http', DSHttpAdapter, { 'default': true });
+	
+	  function registerDigestHook() {
+	    return $rootScope.$watch(function () {
+	      return store.observe.Platform.performMicrotaskCheckpoint();
+	    });
+	  }
+	
+	  (function (window) {
+	    var timeout = null;
+	
+	    window.document.addEventListener('scroll', function (event) {
+	      clearTimeout(timeout);
+	
+	      if (event.target.className.indexOf('ui-grid') > -1) {
+	
+	        // Unregister the watcher when scrolling inside of ui-grid
+	        unregisterDigestHook($rootScope);
+	
+	        // Reattach the watcher when scrolling has completed. This timeout will be
+	        // replaced with a new one if another scroll event fires within 500ms.
+	        timeout = setTimeout(function () {
+	          unregisterDigestHook = registerDigestHook();
+	        }, 500);
+	      } else {
+	        return;
+	      }
+	    });
+	  })(window);
 	}]);
 	
 	for (var i = 0; i < adapters.length; i++) {
