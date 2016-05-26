@@ -232,15 +232,13 @@ angular.module('js-data', ['ng'])
   .provider('DS', DSProvider)
   .provider('DSHttpAdapter', DSHttpAdapterProvider)
   .run(['DS', 'DSHttpAdapter', (DS, DSHttpAdapter, $rootScope) => {
-
-    let unregisterDigestHook = null
-    registerDigestHook($rootScope)
-    DS.registerAdapter('http', DSHttpAdapter, { 'default': true })
-
-
     function registerDigestHook() {
       return $rootScope.$watch(() => store.observe.Platform.performMicrotaskCheckpoint())
     }
+
+    let unregisterDigestHook = registerDigestHook()
+
+    DS.registerAdapter('http', DSHttpAdapter, { 'default': true })
 
     (window => {
       let timeout = null;
@@ -251,7 +249,7 @@ angular.module('js-data', ['ng'])
         if (event.target.className.indexOf('ui-grid') > -1) {
 
           // Unregister the watcher when scrolling inside of ui-grid
-          unregisterDigestHook($rootScope);
+          unregisterDigestHook();
 
           // Reattach the watcher when scrolling has completed. This timeout will be
           // replaced with a new one if another scroll event fires within 500ms.
