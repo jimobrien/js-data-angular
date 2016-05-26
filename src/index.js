@@ -39,7 +39,7 @@ let functionsToWrap = [
 let unregisterDigestHook = null
 
 
-function registerDigestHook() {
+function registerDigestHook($rootScope) {
   return $rootScope.$watch(() => store.observe.Platform.performMicrotaskCheckpoint())
 }
 
@@ -67,7 +67,7 @@ function registerDigestHook() {
 
   });
 
-}(window))
+})(window)
 
 
 
@@ -264,10 +264,10 @@ angular.module('js-data', ['ng'])
   .value('DSUtils', DSUtils)
   .value('DSErrors', DSErrors)
   .value('DSVersion', JSData.version)
-  .constant('DigestHook', DigestHook)
   .provider('DS', DSProvider)
   .provider('DSHttpAdapter', DSHttpAdapterProvider)
-  .run(['DS', 'DSHttpAdapter', (DS, DSHttpAdapter) => {
+  .run(['DS', 'DSHttpAdapter', (DS, DSHttpAdapter, $rootScope) => {
+    registerDigestHook($rootScope)
     DS.registerAdapter('http', DSHttpAdapter, { 'default': true })
   }])
 

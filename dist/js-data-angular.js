@@ -97,7 +97,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var unregisterDigestHook = null;
 	
-	function registerDigestHook() {
+	function registerDigestHook($rootScope) {
 	  return $rootScope.$watch(function () {
 	    return store.observe.Platform.performMicrotaskCheckpoint();
 	  });
@@ -332,7 +332,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _this.$get = deps;
 	};
 	
-	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter) {
+	angular.module('js-data', ['ng']).value('DSUtils', DSUtils).value('DSErrors', DSErrors).value('DSVersion', JSData.version).provider('DS', DSProvider).provider('DSHttpAdapter', DSHttpAdapterProvider).run(['DS', 'DSHttpAdapter', function (DS, DSHttpAdapter, $rootScope) {
+	  registerDigestHook($rootScope);
 	  DS.registerAdapter('http', DSHttpAdapter, { 'default': true });
 	}]);
 	
